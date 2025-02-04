@@ -503,6 +503,7 @@ const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { title } = require("process");
 
 dotenv.config();
 
@@ -568,6 +569,7 @@ const authenticateUser = (req, res, next) => {
 
 const uploadSchema = new mongoose.Schema({
   text: String,
+  title: String,
   image: String,
 });
 
@@ -586,6 +588,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
   try {
     const newUpload = new Upload({
       text: req.body.text,
+      title: req.body.text,
       image: req.file.filename,
     });
     await newUpload.save();
