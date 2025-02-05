@@ -319,7 +319,7 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
  */
-
+/* 
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -407,6 +407,94 @@ app.get("/data", async (req, res) => {
 
 // Startovanje servera
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+ */
+
+/* radio u skoli */
+
+
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const uploadDir = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(uploadDir));
+
+mongoose.connect(process.env.MONGO_URI_EMINA, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Error connecting to MongoDB:', err);
+});
+
+const uploadSchema = new mongoose.Schema({
+  text: String,
+  title: String,
+  image: String,
+  img1: String,
+  img2: String,
+  img3: String,
+  img4: String,
+});
+
+const Upload = mongoose.model("Upload", uploadSchema);
+
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+app.post("/upload", upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "img1", maxCount: 1 },
+  { name: "img2", maxCount: 1 },
+  { name: "img3", maxCount: 1 },
+  { name: "img4", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const newUpload = new Upload({
+      text: req.body.text,
+      title: req.body.title,
+      image: req.files["image"] ? req.files["image"][0].filename : "",
+      img1: req.files["img1"] ? req.files["img1"][0].filename : "",
+      img2: req.files["img2"] ? req.files["img2"][0].filename : "",
+      img3: req.files["img3"] ? req.files["img3"][0].filename : "",
+      img4: req.files["img4"] ? req.files["img4"][0].filename : "",
+    });
+    await newUpload.save();
+    res.status(200).json({ message: "Upload successful" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/data", async (req, res) => {
+  try {
+    const uploads = await Upload.find();
+    res.json(uploads);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
