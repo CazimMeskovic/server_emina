@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server/api/index.js",
   "scripts": {
-    "start": "node server/api/index.js"
+    "start": "node server/api/index.js",
+    "vercel-build": "echo 'No build step required'"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
