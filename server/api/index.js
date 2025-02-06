@@ -449,17 +449,29 @@ const uploadSchema = new mongoose.Schema({
   img3: String,
   img4: String,
 });
+/*  */
 
 const Upload = mongoose.model("Upload", uploadSchema);
 
 const storage = multer.diskStorage({
-  destination: uploadDir,
+  destination: "uploads/",
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
+/*  */
+/* const Upload = mongoose.model("Upload", uploadSchema); */
+
+/* const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage }); */
 
 app.post("/upload", upload.fields([
   { name: "image", maxCount: 1 },
