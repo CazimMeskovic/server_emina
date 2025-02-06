@@ -412,7 +412,7 @@ app.listen(PORT, () => {
 });
  */
 
-/* nova server s sigurnoscu i sl  */
+/* novi server s sigurnoscu */
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
