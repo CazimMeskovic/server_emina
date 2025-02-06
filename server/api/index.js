@@ -319,7 +319,7 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
  */
-
+/* 
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -407,6 +407,119 @@ app.get("/data", async (req, res) => {
 
 // Startovanje servera
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+ */
+
+/* nova server s sigurnoscu i sl  */
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+const fs = require("fs");
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json());
+app.use("/uploads", express.static("uploads"));
+
+// Provjera da li uploads folder postoji, ako ne - kreiraj ga
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Povezivanje sa MongoDB bazom podataka
+mongoose.connect(process.env.MONGO_URI_EMINA, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Error connecting to MongoDB:', err);
+});
+
+// Definisanje šeme za upload
+const uploadSchema = new mongoose.Schema({
+  text: String,
+  title: String,
+  image: String,
+  img1: String,
+  img2: String,
+  img3: String,
+  img4: String,
+});
+
+const Upload = mongoose.model("Upload", uploadSchema);
+
+// Multer konfiguracija za upload
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+// Ograničenje na slike (JPEG, PNG, WEBP)
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only images (JPEG, PNG, WEBP) are allowed"), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter });
+
+// Ruta za upload fajlova
+app.post("/upload", upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "img1", maxCount: 1 },
+  { name: "img2", maxCount: 1 },
+  { name: "img3", maxCount: 1 },
+  { name: "img4", maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const newUpload = new Upload({
+      text: req.body.text,
+      title: req.body.title,
+      image: req.files["image"] ? req.files["image"][0].filename : "",
+      img1: req.files["img1"] ? req.files["img1"][0].filename : "",
+      img2: req.files["img2"] ? req.files["img2"][0].filename : "",
+      img3: req.files["img3"] ? req.files["img3"][0].filename : "",
+      img4: req.files["img4"] ? req.files["img4"][0].filename : "",
+    });
+
+    await newUpload.save();
+    res.status(200).json({ message: "Upload successful", data: newUpload });
+  } catch (error) {
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({ error: `Multer error: ${error.message}` });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Ruta za dobavljanje podataka
+app.get("/data", async (req, res) => {
+  try {
+    const uploads = await Upload.find();
+    res.json(uploads);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Pokretanje servera
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
